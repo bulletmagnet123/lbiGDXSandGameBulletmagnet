@@ -11,11 +11,12 @@ import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Date;
 
 public class GameScreen implements Screen, InputProcessor {
 
     private SpriteBatch batch;
-    private Texture sandTexture;
+    private Texture SandTexture = new Texture("sand.png");
     private Pixmap pixmap;
     private int sandWidth;
     private int sandHeight;
@@ -23,8 +24,8 @@ public class GameScreen implements Screen, InputProcessor {
     private OrthographicCamera camera;
     int sandSize = 25;
     private ArrayList<SandParticle> sandParticles;
-    private ShapeRenderer shapeRenderer;
-    private Texture newSandTexture;
+
+    private Texture DarkSandTexture = new Texture("dark.png");
 
     @Override
     public void show() {
@@ -46,7 +47,6 @@ public class GameScreen implements Screen, InputProcessor {
         camera = new OrthographicCamera();
         camera.setToOrtho(false, sandWidth, sandHeight);
         Gdx.input.setInputProcessor(this);
-        sandTexture = new Texture("sand.png");
     }
 
 
@@ -68,19 +68,26 @@ public class GameScreen implements Screen, InputProcessor {
             particle.render(batch, sandSize);
         }
 
-        // Add new sand particle with right click
-        if (Gdx.input.isButtonPressed(Input.Buttons.RIGHT)) {
-            Vector3 worldPos = camera.unproject(new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0));
-            int sandX = (int) (worldPos.x / sandSize);
-            int sandY = (int) (worldPos.y / sandSize);
-            if (sandX >= 0 && sandX < sandArray.length && sandY >= 0 && sandY < sandArray[0].length) {
-                sandArray[sandX][sandY] = 1;
-                sandParticles.add(new SandParticle(sandX * sandSize, sandY * sandSize, sandTexture));
-            }
+        // Add new sand particle with left or right click
+        Vector3 worldPos = camera.unproject(new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0));
+        int sandX = (int) (worldPos.x / sandSize);
+        int sandY = (int) (worldPos.y / sandSize);
+
+        if (Gdx.input.isButtonPressed(Input.Buttons.LEFT)) {
+            // Draw the first sand type with left click
+            addSandParticle(sandX, sandY, 1);
+        } else if (Gdx.input.isButtonPressed(Input.Buttons.RIGHT)) {
+            // Draw the second sand type with right click
+            addSandParticle(sandX, sandY, 2);
         }
         batch.end();
     }
 
+    private void addSandParticle(int sandX, int sandY, int sandType) {
+        if (sandX >= 0 && sandX < sandArray.length && sandY >= 0 && sandY < sandArray[0].length) {
+            sandArray[sandX][sandY] = sandType;
+        }
+    }
 
 
     @Override
@@ -107,7 +114,7 @@ public class GameScreen implements Screen, InputProcessor {
     public void dispose() {
         // Dispose of resources
         batch.dispose();
-        sandTexture.dispose();
+        DarkSandTexture.dispose();
         pixmap.dispose();
     }
 
@@ -115,37 +122,57 @@ public class GameScreen implements Screen, InputProcessor {
         // Loop over each sand particle from bottom to top
         for (int y = 1; y < sandHeight; y++) {
             for (int x = 0; x < sandWidth; x++) {
-                if (sandArray[x][y] == 1) {
+                int sandType = sandArray[x][y];
+                if (sandType > 0) {
                     // Check if the space below the sand particle is empty
                     if (sandArray[x][y - 1] == 0) {
                         // Move the sand particle down
                         sandArray[x][y] = 0;
-                        sandArray[x][y - 1] = 1;
+                        sandArray[x][y - 1] = sandType;
                     } else {
                         // Check if the space to the left or right of the sand particle is empty
                         if (x > 0 && sandArray[x - 1][y - 1] == 0 && MathUtils.randomBoolean(0.5f)) {
                             // Move the sand particle to the left
                             sandArray[x][y] = 0;
-                            sandArray[x - 1][y - 1] = 1;
+                            sandArray[x - 1][y - 1] = sandType;
                         } else if (x < sandWidth - 1 && sandArray[x + 1][y - 1] == 0 && MathUtils.randomBoolean(0.5f)) {
                             // Move the sand particle to the right
                             sandArray[x][y] = 0;
-                            sandArray[x + 1][y - 1] = 1;
+                            sandArray[x + 1][y - 1] = sandType;
                         }
                     }
                 }
             }
         }
+
         // Update sandParticles with new positions
         sandParticles.clear();
         for (int x = 0; x < sandWidth; x++) {
             for (int y = 0; y < sandHeight; y++) {
-                if (sandArray[x][y] == 1) {
-                    sandParticles.add(new SandParticle(x * sandSize, y * sandSize, sandTexture));
+                int sandType = sandArray[x][y];
+                if (sandType > 0) {
+                    Texture texture = getTextureForSandType(sandType);
+                    sandParticles.add(new SandParticle(x * sandSize, y * sandSize, texture));
                 }
             }
         }
     }
+
+    private Texture getTextureForSandType(int sandType) {
+        // Replace with your own logic to map sandType to the correct texture
+        // For example:
+        switch (sandType) {
+            case 1:
+                return SandTexture;
+            case 2:
+                return DarkSandTexture;
+            // Add more cases for additional sand types
+            default:
+                return SandTexture;
+        }
+    }
+
+
 
 
 
