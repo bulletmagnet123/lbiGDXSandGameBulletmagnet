@@ -5,13 +5,8 @@ import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.math.Vector2;
-import org.w3c.dom.Text;
 
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Date;
 
 public class GameScreen implements Screen, InputProcessor {
 
