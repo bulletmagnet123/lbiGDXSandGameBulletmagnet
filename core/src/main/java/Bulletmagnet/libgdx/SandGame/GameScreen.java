@@ -21,6 +21,7 @@ public class GameScreen implements Screen, InputProcessor {
     private ArrayList<SandParticle> sandParticles;
 
     private Texture DarkSandTexture = new Texture("dark.png");
+    private Texture RedSandTexture = new Texture("red.png");
 
     @Override
     public void show() {
@@ -74,6 +75,8 @@ public class GameScreen implements Screen, InputProcessor {
         } else if (Gdx.input.isButtonPressed(Input.Buttons.RIGHT)) {
             // Draw the second sand type with right click
             addSandParticle(sandX, sandY, 2);
+        } else if (Gdx.input.isButtonPressed(Input.Buttons.MIDDLE)) {
+            addSandParticle(sandX, sandY, 3);
         }
         batch.end();
     }
@@ -162,6 +165,8 @@ public class GameScreen implements Screen, InputProcessor {
             case 2:
                 return DarkSandTexture;
             // Add more cases for additional sand types
+            case 3:
+                return RedSandTexture;
             default:
                 return SandTexture;
         }
