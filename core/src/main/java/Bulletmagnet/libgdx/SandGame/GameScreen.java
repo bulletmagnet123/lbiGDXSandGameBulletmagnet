@@ -5,6 +5,12 @@ import com.badlogic.gdx.graphics.*;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector3;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.math.Vector2;
+import org.w3c.dom.Text;
+
+import java.util.ArrayList;
+import java.util.Comparator;
 
 public class GameScreen implements Screen, InputProcessor {
 
@@ -15,17 +21,18 @@ public class GameScreen implements Screen, InputProcessor {
     private int sandHeight;
     private int[][] sandArray;
     private OrthographicCamera camera;
-    int sandSize = 5;
-    private int getSandSize = 5;
+    int sandSize = 25;
+    private ArrayList<SandParticle> sandParticles;
+    private ShapeRenderer shapeRenderer;
+    private Texture newSandTexture;
 
     @Override
     public void show() {
-        // Initialize sprite batch and sand texture
+        // Initialize sprite batch and sand textures
         batch = new SpriteBatch();
 
-        sandTexture = new Texture("sand.png");
+        sandParticles = new ArrayList<>();
 
-        // Initialize sand pixmap and array
         sandWidth = Gdx.graphics.getWidth();
         sandHeight = Gdx.graphics.getHeight();
 
@@ -36,30 +43,19 @@ public class GameScreen implements Screen, InputProcessor {
         pixmap.setColor(Color.BLACK);
         pixmap.fill();
 
-        // Draw initial sand texture
-        batch.begin();
-        for (int x = 0; x < sandWidth; x++) {
-            for (int y = 0; y < sandHeight; y++) {
-                if (MathUtils.randomBoolean(0.1f)) {
-                    batch.draw(sandTexture, x, y);
-                    sandArray[x][y] = 1;
-                }
-            }
-        }
-
-        batch.end();
         camera = new OrthographicCamera();
         camera.setToOrtho(false, sandWidth, sandHeight);
         Gdx.input.setInputProcessor(this);
+        sandTexture = new Texture("sand.png");
     }
+
+
 
     @Override
     public void render(float delta) {
         // Clear screen
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
-
 
         // Update sand
         updateSand();
@@ -68,26 +64,24 @@ public class GameScreen implements Screen, InputProcessor {
 
         // Draw sand
         batch.begin();
-        for (int x = 0; x < sandWidth; x++) {
-            for (int y = 0; y < sandHeight; y++) {
-                if (sandArray[x][y] == 1) {
-                    batch.draw(sandTexture, x * sandSize, y * sandSize, sandSize, sandSize);
-                }
-            }
+        for (SandParticle particle : sandParticles) {
+            particle.render(batch, sandSize);
         }
-        int centerX = sandArray.length / 2;
-        int centerY = sandArray[0].length / 2;
-        sandArray[centerX][centerY] = 1;
-        if (Gdx.input.isButtonPressed(Input.Buttons.LEFT)) {
+
+        // Add new sand particle with right click
+        if (Gdx.input.isButtonPressed(Input.Buttons.RIGHT)) {
             Vector3 worldPos = camera.unproject(new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0));
-            int sandX = (int)(worldPos.x / sandSize);
-            int sandY = (int)(worldPos.y / sandSize);
+            int sandX = (int) (worldPos.x / sandSize);
+            int sandY = (int) (worldPos.y / sandSize);
             if (sandX >= 0 && sandX < sandArray.length && sandY >= 0 && sandY < sandArray[0].length) {
                 sandArray[sandX][sandY] = 1;
+                sandParticles.add(new SandParticle(sandX * sandSize, sandY * sandSize, sandTexture));
             }
         }
         batch.end();
     }
+
+
 
     @Override
     public void resize(int width, int height) {
@@ -142,7 +136,18 @@ public class GameScreen implements Screen, InputProcessor {
                 }
             }
         }
+        // Update sandParticles with new positions
+        sandParticles.clear();
+        for (int x = 0; x < sandWidth; x++) {
+            for (int y = 0; y < sandHeight; y++) {
+                if (sandArray[x][y] == 1) {
+                    sandParticles.add(new SandParticle(x * sandSize, y * sandSize, sandTexture));
+                }
+            }
+        }
     }
+
+
 
     @Override
     public boolean keyDown(int keycode) {
@@ -161,23 +166,9 @@ public class GameScreen implements Screen, InputProcessor {
 
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-        // Convert the mouse click position to game world coordinates
-        Vector3 worldPos = camera.unproject(new Vector3(screenX, screenY, 0));
-
-
-        // Calculate the index of the sand particle that was clicked
-        int sandX = (int) Math.floor(worldPos.x);
-        int sandY = (int) Math.floor(worldPos.y);
-
-        // Set the clicked sand particle to active
-        if (sandX >= 0 && sandX < sandWidth && sandY >= 0 && sandY < sandHeight) {
-            sandArray[sandX][sandY] = 1;
-        }
-        System.out.println(worldPos.x);
-        System.out.println(worldPos.y);
-        System.out.println(sandArray[sandX][sandY]);
-        return true;
+        return false;
     }
+
 
     @Override
     public boolean touchUp(int screenX, int screenY, int pointer, int button) {
